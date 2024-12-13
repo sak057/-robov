@@ -1,0 +1,53 @@
+from PIL import Image, ImageOps
+import os
+
+def main():
+    print("画像処理アプリケーションへようこそ！")
+    print("1: 画像をリサイズ")
+    print("2: 画像を回転")
+    print("3: グレースケール変換")
+    print("4: 終了")
+    
+    while True:
+        choice = input("操作を選択してください（1-4）: ")
+        
+        if choice == '4':
+            print("終了します。")
+            break
+
+        image_path = input("画像ファイルのパスを入力してください: ")
+        if not os.path.exists(image_path):
+            print("指定されたファイルが存在しません。もう一度お試しください。")
+            continue
+        
+        try:
+            image = Image.open(image_path)
+        except Exception as e:
+            print(f"画像を開く際にエラーが発生しました: {e}")
+            continue
+
+        if choice == '1':
+            width = int(input("新しい幅を入力してください: "))
+            height = int(input("新しい高さを入力してください: "))
+            resized_image = image.resize((width, height))
+            save_image(resized_image, "resized_image.jpg")
+
+        elif choice == '2':
+            angle = float(input("回転角度を入力してください（度単位）: "))
+            rotated_image = image.rotate(angle)
+            save_image(rotated_image, "rotated_image.jpg")
+
+        elif choice == '3':
+            grayscale_image = ImageOps.grayscale(image)
+            save_image(grayscale_image, "grayscale_image.jpg")
+        
+        else:
+            print("無効な選択です。もう一度お試しください。")
+
+def save_image(image, filename):
+    save_path = os.path.join(os.getcwd(), filename)
+    image.save(save_path)
+    print(f"処理済み画像が保存されました: {save_path}")
+
+if __name__ == "__main__":
+    main()
