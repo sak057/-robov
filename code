@@ -2,24 +2,30 @@ from PIL import Image, ImageOps
 import os
 
 def main():
-    print("画像処理アプリケーションへようこそ！")
-    print("1: 画像をリサイズ")
-    print("2: 画像を回転")
-    print("3: グレースケール変換")
-    print("4: 終了")
+    print("\nTRPG立ち絵リサイザーへようこそ！1~3はjpegで保存されるのでpngが欲しい人は4も使ってね！")
+    menu = """
+    1: 画像をリサイズ
+    2: 画像を回転
+    3: グレースケール変換
+    4: Jpegをpngに変換
+    5: 終了
+    """
+    print(menu)
     
     while True:
-        choice = input("操作を選択してください（1-4）: ")
-        
-        if choice == '4':
+        choice = input("操作を選択してください（1-5）: ")
+        if choice == '5':
             print("終了します。")
             break
+        elif choice not in ['1', '2', '3', '4']:
+            print("無効な選択です。もう一度お試しください。")
+            continue
 
         image_path = input("画像ファイルのパスを入力してください: ")
         if not os.path.exists(image_path):
             print("指定されたファイルが存在しません。もう一度お試しください。")
             continue
-        
+
         try:
             image = Image.open(image_path)
         except Exception as e:
@@ -27,25 +33,72 @@ def main():
             continue
 
         if choice == '1':
-            width = int(input("新しい幅を入力してください: "))
-            height = int(input("新しい高さを入力してください: "))
-            resized_image = image.resize((width, height))
-            save_image(resized_image, "resized_image.jpg")
-
+            resize_image(image)
         elif choice == '2':
-            angle = float(input("回転角度を入力してください（度単位）: "))
-            rotated_image = image.rotate(angle)
-            save_image(rotated_image, "rotated_image.jpg")
-
+            rotate_image(image)
         elif choice == '3':
-            grayscale_image = ImageOps.grayscale(image)
-            save_image(grayscale_image, "grayscale_image.jpg")
-        
+            convert_to_grayscale(image)
+        elif choice == '4':
+            convert_to_png(image)
+
+def resize_image(image):
+    try:
+        width = int(input("新しい幅を入力してください: "))
+        height = int(input("新しい高さを入力してください: "))
+        resized_image = image.resize((width, height))
+        save_image(resized_image, "resized_image.jpg")
+    except ValueError:
+        print("幅と高さには整数を入力してください。")
+
+def rotate_image(image):
+    try:
+        angle = float(input("回転角度を入力してください（度単位）: "))
+        rotated_image = image.rotate(angle, expand=True)
+        save_image(rotated_image, "rotated_image.jpg")
+    except ValueError:
+        print("角度には数値を入力してください。")
+
+def convert_to_grayscale(image):
+    grayscale_image = ImageOps.grayscale(image)
+    save_image(grayscale_image, "grayscale_image.jpg")
+
+def convert_to_png(image):
+    output_path = input("変換後のPNGファイルの保存先パスを入力してください: ")
+    if not output_path.lower().endswith('.png'):
+        output_path += '.png'
+    
+    # 背景透過の選択肢を追加
+    transparent_choice = input("背景を透過にしますか？ (yes/no): ").lower()
+    if transparent_choice == 'yes':
+        image = make_background_transparent(image)
+
+    try:
+        image.save(output_path, "PNG")
+        print(f"JPEGをPNGに変換しました: {output_path}")
+    except Exception as e:
+        print(f"変換中にエラーが発生しました: {e}")
+
+def make_background_transparent(image):
+    # RGB画像をRGBAに変換し、白と黒の背景を透明化する
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
+    
+    datas = image.getdata()
+    new_data = []
+    for item in datas:
+        # 背景が白または黒なら透明にする
+        if item[:3] == (255, 255, 255) or item[:3] == (0, 0, 0):  # RGBが白または黒の場合
+            new_data.append((255, 255, 255, 0))  # アルファを0（透明）に設定
         else:
-            print("無効な選択です。もう一度お試しください。")
+            new_data.append(item)
+    
+    image.putdata(new_data)
+    return image
 
 def save_image(image, filename):
     save_path = os.path.join(os.getcwd(), filename)
+    if image.mode == "RGBA":
+        image = image.convert("RGB")
     image.save(save_path)
     print(f"処理済み画像が保存されました: {save_path}")
 
